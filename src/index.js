@@ -2,48 +2,47 @@ import 'react-input-range/dist/react-input-range.css'
 import React from 'react';
 import ReactDOM from 'react-dom';
 import InputRange from 'react-input-range';
-import { createStore } from 'redux';
-import { Provider, connect } from 'react-redux';
+import { createStore, combineReducers } from 'redux';
+import { Provider } from 'react-redux';
+import { reducer as formReducer, reduxForm, Field } from 'redux-form';
 
-const initialState = {
-  values: {
-    min: 2,
-    max: 10
-  }
-}
-
-const rootReducer = (prevState = initialState, action) => {
-  console.log(action);
-  if(action.type === "CHANGE"){
-    return {values: action.values};
-  }
-  return prevState;
-};
+const rootReducer = combineReducers({
+  form: formReducer
+});
 
 const store = createStore(rootReducer);
 
-const changeAction = (values) => ({
-  type: "CHANGE",
-  values
-});
-
 const App = (props) => {
   return (
+    <form onSubmit={props.handleSubmit}>
+      <Field
+        name="foo"
+        maxValue={20}
+        minValue={0}
+        component={({input: {onChange, ...inputParams}, ...params})=>(
     <InputRange
-      maxValue={20}
-      minValue={0}
-      value={props.values}
-      onChange={(control, values) => props.handleValuesChange(values)}
+      {...inputParams}
+      {...params}
+      onChange={(control, values) => onChange(values)}
       />
+          )}
+      />
+    </form>
   );
-}
+};
 
-const AppContainer = connect(
-  state => ({values: state.values}),
-  {handleValuesChange: changeAction}
-)(App);
+const AppForm = reduxForm({
+  form: 'test',
+  initialValues: {
+    foo: {
+      min: 2,
+      max: 10
+    }
+  },
+  onSubmit: (values) => console.log("SUBMIT!", values)
+})(App);
 
 ReactDOM.render(
-  <Provider store={store}><AppContainer /></Provider>,
+  <Provider store={store}><AppForm /></Provider>,
   document.getElementById('root')
 );
